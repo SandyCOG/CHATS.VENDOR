@@ -118,9 +118,12 @@ input {
 <div class="mobile-container">
 
 <div id="loginPage" class="page active">
-  <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email" value="Desmond@makoko.com">
-  <input type="password" id="password" placeholder="Password" value="12345">
+  <h2 style="margin-bottom: 10px;">Login</h2>
+  <p class="subtitle" style="color: #666; font-size: 14px; margin-bottom: 20px;">Please enter your credentials</p>
+  
+  <input type="email" id="email" placeholder="Email" value="">
+  <input type="password" id="password" placeholder="Password" value="">
+  
   <p id="errorMsg"></p>
   <button class="btn-primary" onclick="login()">Log In</button>
 </div>
@@ -173,7 +176,7 @@ input {
 <script>
 let scanCount = 0;
 let qrScanner = null;
-let scannedCodes = []; // Array to store unique IDs
+let scannedCodes = [];
 
 // Hard-coded credentials
 const VALID_EMAIL = "Desmond@makoko.com";
@@ -189,6 +192,13 @@ function login() {
   const password = document.getElementById("password").value.trim();
   const errorMsg = document.getElementById("errorMsg");
 
+  // Check if fields are empty
+  if (!email || !password) {
+    errorMsg.innerText = "Email and Password are required";
+    return;
+  }
+
+  // Validate against hard-coded constants
   if (email === VALID_EMAIL && password === VALID_PASSWORD) {
     errorMsg.innerText = "";
     navigate("selectionPage");
@@ -224,25 +234,19 @@ function startScan() {
 }
 
 function onScanSuccess(decodedText) {
-  // 1. Immediately stop scanning to handle the result
   qrScanner.stop().then(() => {
-    
-    // 2. Check if this code has been scanned before
     if (scannedCodes.includes(decodedText)) {
       document.getElementById("resultStatus").innerText = "Duplicate Detected";
       document.getElementById("resultStatus").style.color = "#e74c3c";
       document.getElementById("lastScannedValue").innerText = decodedText + " (Already Scanned)";
     } else {
-      // 3. If new, add to array and increment count
       scannedCodes.push(decodedText);
       scanCount++;
-      
       document.getElementById("resultStatus").innerText = "Scan Completed";
       document.getElementById("resultStatus").style.color = "var(--primary-green)";
       document.getElementById("lastScannedValue").innerText = decodedText;
     }
 
-    // 4. Update UI and navigate
     document.getElementById("counterDisplay").innerText = scanCount;
     navigate("resultPage");
   });
@@ -262,13 +266,21 @@ function scanAgain() {
 
 function finish() {
   alert("Session completed.\nTotal unique scans: " + scanCount);
-  // Reset everything
+  
+  // 1. Reset Session Data
   scanCount = 0;
   scannedCodes = [];
+  
+  // 2. Clear UI Displays
   document.getElementById("counterDisplay").innerText = 0;
   document.getElementById("lastScannedValue").innerText = "—";
-  document.getElementById("email").value = "Desmond@makoko.com";
-  document.getElementById("password").value = "12345";
+  
+  // 3. Clear Login Fields
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("errorMsg").innerText = "";
+  
+  // 4. Send back to login
   navigate("loginPage");
 }
 </script>
