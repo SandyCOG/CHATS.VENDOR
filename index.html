@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mobile QR Scanner App</title>
 
-<!-- QR Scanner Library -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 :root {
   --primary-green: #12B77A;
+  --error-red: #e74c3c;
 }
 * {
   box-sizing: border-box;
@@ -61,7 +61,7 @@ input {
   cursor: pointer;
 }
 #errorMsg {
-  color: red;
+  color: var(--error-red);
   text-align: center;
   font-size: 14px;
 }
@@ -117,16 +117,14 @@ input {
 <body>
 <div class="mobile-container">
 
-<!-- LOGIN PAGE -->
 <div id="loginPage" class="page active">
   <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
+  <input type="email" id="email" placeholder="Email" value="admin@example.com">
+  <input type="password" id="password" placeholder="Password" value="12345">
   <p id="errorMsg"></p>
   <button class="btn-primary" onclick="login()">Log In</button>
 </div>
 
-<!-- SELECTION PAGE -->
 <div id="selectionPage" class="page">
   <h3 style="text-align:center;">Choose Method</h3>
 
@@ -148,26 +146,25 @@ input {
   <button class="btn-primary" onclick="confirmSelection()">Continue</button>
 </div>
 
-<!-- CAMERA PAGE -->
 <div id="cameraPage" class="page">
   <h3 style="text-align:center;">Scan QR Code</h3>
   <div id="qr-reader"></div>
   <p style="text-align:center;">Align QR code within frame</p>
+  <button class="btn-primary" style="background:#666; margin-top: auto;" onclick="stopAndBack()">Back</button>
 </div>
 
-<!-- RESULT PAGE -->
 <div id="resultPage" class="page">
-  <h2 style="text-align:center;">Scan Completed</h2>
+  <h2 id="resultStatus" style="text-align:center;">Scan Completed</h2>
 
   <div class="result-circle" id="counterDisplay">0</div>
-  <p style="text-align:center;">Total QR Codes Scanned</p>
+  <p style="text-align:center;">Total Unique Scans</p>
 
   <p style="text-align:center;font-size:14px;">
-    <strong>Last Scanned ID:</strong><br>
+    <strong>Scanned Content:</strong><br>
     <span id="lastScannedValue">—</span>
   </p>
 
-  <button class="btn-primary" onclick="scanAgain()">Scan Again</button>
+  <button class="btn-primary" id="scanAgainBtn" onclick="scanAgain()">Scan Again</button>
   <button class="btn-primary" style="background:#eee;color:#333;" onclick="finish()">Finish & Logout</button>
 </div>
 
@@ -176,9 +173,9 @@ input {
 <script>
 let scanCount = 0;
 let qrScanner = null;
-let lastScannedValue = "";
+let scannedCodes = []; // Array to store unique IDs
 
-// Hard-coded credentials (replace later)
+// Hard-coded credentials
 const VALID_EMAIL = "admin@example.com";
 const VALID_PASSWORD = "12345";
 
@@ -191,11 +188,6 @@ function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
   const errorMsg = document.getElementById("errorMsg");
-
-  if (!email || !password) {
-    errorMsg.innerText = "Please enter email and password";
-    return;
-  }
 
   if (email === VALID_EMAIL && password === VALID_PASSWORD) {
     errorMsg.innerText = "";
@@ -220,26 +212,48 @@ function comingSoon() {
 
 function startScan() {
   navigate("cameraPage");
-
-  qrScanner = new Html5Qrcode("qr-reader");
+  if (!qrScanner) {
+    qrScanner = new Html5Qrcode("qr-reader");
+  }
 
   qrScanner.start(
-    { facingMode: "environment" }, // BACK CAMERA
+    { facingMode: "environment" }, 
     { fps: 10, qrbox: 250 },
     onScanSuccess
-  ).catch(err => alert("Camera error: " + err));
+  ).catch(err => console.error("Camera error: " + err));
 }
 
 function onScanSuccess(decodedText) {
+  // 1. Immediately stop scanning to handle the result
   qrScanner.stop().then(() => {
-    scanCount++;
-    lastScannedValue = decodedText;
+    
+    // 2. Check if this code has been scanned before
+    if (scannedCodes.includes(decodedText)) {
+      document.getElementById("resultStatus").innerText = "Duplicate Detected";
+      document.getElementById("resultStatus").style.color = "#e74c3c";
+      document.getElementById("lastScannedValue").innerText = decodedText + " (Already Scanned)";
+    } else {
+      // 3. If new, add to array and increment count
+      scannedCodes.push(decodedText);
+      scanCount++;
+      
+      document.getElementById("resultStatus").innerText = "Scan Completed";
+      document.getElementById("resultStatus").style.color = "var(--primary-green)";
+      document.getElementById("lastScannedValue").innerText = decodedText;
+    }
 
+    // 4. Update UI and navigate
     document.getElementById("counterDisplay").innerText = scanCount;
-    document.getElementById("lastScannedValue").innerText = lastScannedValue;
-
     navigate("resultPage");
   });
+}
+
+function stopAndBack() {
+  if (qrScanner) {
+    qrScanner.stop().then(() => navigate("selectionPage"));
+  } else {
+    navigate("selectionPage");
+  }
 }
 
 function scanAgain() {
@@ -247,13 +261,14 @@ function scanAgain() {
 }
 
 function finish() {
-  alert("Session completed.\nTotal scans: " + scanCount);
+  alert("Session completed.\nTotal unique scans: " + scanCount);
+  // Reset everything
   scanCount = 0;
-  lastScannedValue = "";
+  scannedCodes = [];
   document.getElementById("counterDisplay").innerText = 0;
   document.getElementById("lastScannedValue").innerText = "—";
-  document.getElementById("email").value = "";
-  document.getElementById("password").value = "";
+  document.getElementById("email").value = "admin@example.com";
+  document.getElementById("password").value = "12345";
   navigate("loginPage");
 }
 </script>
