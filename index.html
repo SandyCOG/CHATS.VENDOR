@@ -13,8 +13,8 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #eee;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #333;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -27,7 +27,7 @@
             height: 667px;
             background: white;
             border-radius: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             overflow: hidden;
             position: relative;
             display: flex;
@@ -36,9 +36,10 @@
 
         .page {
             display: none;
-            padding: 40px 20px;
+            padding: 30px 20px;
             flex-direction: column;
             height: 100%;
+            box-sizing: border-box;
             animation: fadeIn 0.3s;
         }
 
@@ -47,73 +48,121 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Login Styles */
-        h2 { font-size: 28px; margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 8px; }
+        h2 { font-size: 24px; margin-bottom: 5px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
         input {
             width: 100%;
             padding: 15px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 10px;
             box-sizing: border-box;
             background: #F7F8F9;
         }
 
-        /* Buttons */
-        .btn-primary {
-            background-color: var(--light-green);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: auto;
-            margin-bottom: 20px;
-        }
-
         /* Selection List */
         .option-card {
-            border: 1px solid #eee;
+            border: 2px solid #eee;
             border-radius: 12px;
-            padding: 15px;
+            padding: 18px;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
+            transition: 0.2s;
         }
 
         .option-card.selected {
-            border: 2px solid var(--primary-green);
+            border-color: var(--primary-green);
+            background-color: #f0fff9;
         }
 
-        .check-icon {
-            width: 20px;
-            height: 20px;
+        .check-circle {
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            border: 1px solid #ccc;
+            border: 2px solid #ccc;
         }
 
-        .selected .check-icon {
+        .selected .check-circle {
             background: var(--primary-green);
             border-color: var(--primary-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .selected .check-circle::after {
+            content: '✓'; color: white; font-size: 14px;
         }
 
-        /* Result Page */
+        /* Camera Simulation */
+        #cameraPage {
+            background: #000;
+            padding: 0;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .viewfinder {
+            width: 250px;
+            height: 250px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .laser {
+            width: 100%;
+            height: 2px;
+            background: var(--primary-green);
+            position: absolute;
+            top: 0;
+            box-shadow: 0 0 15px var(--primary-green);
+            animation: scanning 2s infinite ease-in-out;
+        }
+
+        @keyframes scanning {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+
+        .camera-text {
+            color: white;
+            position: absolute;
+            bottom: 50px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: auto;
+        }
+
         .result-circle {
-            width: 150px;
-            height: 150px;
-            background: var(--light-green);
+            width: 120px;
+            height: 120px;
+            background: var(--primary-green);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
-            font-size: 40px;
+            font-size: 32px;
             margin: 40px auto;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -123,45 +172,50 @@
     
     <div id="loginPage" class="page active">
         <h2>Welcome back!</h2>
-        <p class="subtitle">Don't have an account? <span style="color: var(--primary-green)">Sign up</span></p>
-        
-        <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="Enter Email" value="admin@example.com">
-        </div>
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="Enter Password" value="12345">
-        </div>
-        
+        <p class="subtitle">Please sign in to continue</p>
+        <input type="email" id="email" placeholder="Email" value="admin@example.com">
+        <input type="password" id="password" placeholder="Password" value="12345">
         <button class="btn-primary" onclick="login()">Log In</button>
     </div>
 
     <div id="selectionPage" class="page">
-        <h3 style="text-align: center;">Accept Payment</h3>
-        <div class="option-card">
+        <h3 style="text-align: center; margin-bottom: 30px;">Choose Method</h3>
+        
+        <div class="option-card" onclick="selectOption(this)">
             <span>Generate QR Code</span>
-            <div class="check-icon"></div>
+            <div class="check-circle"></div>
         </div>
-        <div class="option-card selected">
+        
+        <div class="option-card selected" onclick="selectOption(this)" id="qrOption">
             <span>Scan QR Code</span>
-            <div class="check-icon"></div>
+            <div class="check-circle"></div>
         </div>
-        <div class="option-card">
+        
+        <div class="option-card" onclick="selectOption(this)">
             <span>Tap NFC Card</span>
-            <div class="check-icon"></div>
+            <div class="check-circle"></div>
         </div>
 
-        <button class="btn-primary" style="background-color: var(--primary-green)" onclick="startScan()">Confirm</button>
+        <button class="btn-primary" onclick="handleConfirm()">Confirm Selection</button>
+    </div>
+
+    <div id="cameraPage" class="page">
+        <div class="viewfinder">
+            <div class="laser"></div>
+        </div>
+        <div class="camera-text">
+            <p>Align QR Code within frame</p>
+            <small style="opacity: 0.6">Simulating Camera Feed...</small>
+        </div>
     </div>
 
     <div id="resultPage" class="page">
-        <h2 style="text-align: center;">Scan Completed</h2>
+        <h2 style="text-align: center; margin-top: 20px;">Scan Completed</h2>
         <div class="result-circle" id="counterDisplay">0</div>
-        <p style="text-align: center; font-size: 18px;">QR Codes Scanned</p>
+        <p style="text-align: center; color: #666;">QR Codes Scanned in this session</p>
         
-        <button class="btn-primary" onclick="showSelection()">Scan Again</button>
-        <button class="btn-primary" style="background: #ccc;" onclick="location.reload()">Finish</button>
+        <button class="btn-primary" onclick="navigate('selectionPage')">Scan Another</button>
+        <button class="btn-primary" style="background: #f1f1f1; color: #333; margin-top: 10px;" onclick="location.reload()">Finish & Logout</button>
     </div>
 
 </div>
@@ -175,31 +229,35 @@
     }
 
     function login() {
-        const email = document.getElementById('email').value;
-        const pass = document.getElementById('password').value;
+        navigate('selectionPage');
+    }
 
-        // Preprogrammed credentials check
-        if(email === "admin@example.com" && pass === "12345") {
-            navigate('selectionPage');
+    function selectOption(element) {
+        // Remove selected class from all
+        document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+        // Add to clicked
+        element.classList.add('selected');
+    }
+
+    function handleConfirm() {
+        const isQRSelected = document.getElementById('qrOption').classList.contains('selected');
+        
+        if (isQRSelected) {
+            startScanProcess();
         } else {
-            alert("Invalid credentials. Use admin@example.com / 12345");
+            alert("This simulator currently only supports 'Scan QR Code'.");
         }
     }
 
-    function startScan() {
-        // Simulating an "AI" scan process with a delay
-        document.body.style.cursor = 'wait';
+    function startScanProcess() {
+        navigate('cameraPage');
         
+        // Simulating the 2-second wait of a camera focusing and "finding" the code
         setTimeout(() => {
             scanCount++;
             document.getElementById('counterDisplay').innerText = scanCount;
-            document.body.style.cursor = 'default';
             navigate('resultPage');
-        }, 1500); // 1.5 second "scan" time
-    }
-
-    function showSelection() {
-        navigate('selectionPage');
+        }, 2500);
     }
 </script>
 
