@@ -2,116 +2,193 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>QR Scan App</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mobile QR Scanner App</title>
+
+<!-- QR Scanner Library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-    margin: 0;
-    padding: 0;
-  }
-
-  .page {
-    display: none;
-    padding: 30px;
-    text-align: center;
-  }
-
-  .active {
-    display: block;
-  }
-
-  input, button {
-    width: 90%;
-    padding: 14px;
-    margin: 10px 0;
-    font-size: 16px;
-  }
-
-  button {
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-  }
-
-  button.secondary {
-    background: #6c757d;
-  }
-
-  h1 {
-    font-size: 22px;
-  }
+:root {
+  --primary-green: #12B77A;
+  --bg-gray: #f9f9f9;
+}
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: #333;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+.mobile-container {
+  width: 375px;
+  height: 667px;
+  background: white;
+  border-radius: 30px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.page {
+  display: none;
+  padding: 30px 20px;
+  flex-direction: column;
+  height: 100%;
+}
+.page.active { display: flex; }
+input, button {
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+input {
+  border: 1px solid #ddd;
+  background: #F7F8F9;
+}
+.btn-primary {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  font-weight: bold;
+}
+.option-card {
+  border: 2px solid #eee;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.option-card.selected {
+  border-color: var(--primary-green);
+  background: #f0fff9;
+}
+.check-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+}
+.selected .check-circle {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+}
+#qr-reader {
+  width: 280px;
+  margin: auto;
+}
+.result-circle {
+  width: 120px;
+  height: 120px;
+  background: var(--primary-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 32px;
+  margin: 40px auto;
+}
 </style>
 </head>
 
 <body>
+<div class="mobile-container">
 
-<!-- PAGE 1: LOGIN -->
-<div class="page active" id="loginPage">
-  <h1>Login</h1>
-  <input type="text" id="username" placeholder="Username">
-  <input type="password" id="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <p id="loginError" style="color:red;"></p>
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="page active">
+  <h2>Welcome back</h2>
+  <input type="email" id="email" value="admin@example.com">
+  <input type="password" id="password" value="12345">
+  <button class="btn-primary" onclick="login()">Log In</button>
 </div>
 
-<!-- PAGE 2: SCAN -->
-<div class="page" id="scanPage">
-  <h1>Scan QR Code</h1>
-  <button onclick="scanQR()">Scan QR Code</button>
+<!-- SELECTION PAGE -->
+<div id="selectionPage" class="page">
+  <h3>Choose Method</h3>
+  <div class="option-card selected" id="qrOption" onclick="selectOption(this)">
+    <span>Scan QR Code</span>
+    <div class="check-circle"></div>
+  </div>
+  <button class="btn-primary" onclick="handleConfirm()">Confirm Selection</button>
 </div>
 
-<!-- PAGE 3: RESULT -->
-<div class="page" id="resultPage">
-  <h1>Scan completed ✅</h1>
-  <h2><span id="scanCount">0</span> QR codes scanned</h2>
-  <button onclick="scanAgain()">Scan Again</button>
-  <button class="secondary" onclick="finish()">Finish</button>
+<!-- CAMERA PAGE -->
+<div id="cameraPage" class="page">
+  <div id="qr-reader"></div>
+  <p style="text-align:center;">Align QR Code within frame</p>
+</div>
+
+<!-- RESULT PAGE -->
+<div id="resultPage" class="page">
+  <h2 style="text-align:center;">Scan Completed</h2>
+  <div class="result-circle" id="counterDisplay">0</div>
+  <p style="text-align:center;">QR Codes Scanned</p>
+  <button class="btn-primary" onclick="navigate('selectionPage')">Scan Again</button>
+  <button class="btn-primary" style="background:#eee;color:#333;" onclick="finish()">Finish & Logout</button>
+</div>
+
 </div>
 
 <script>
-  // Preprogrammed credentials
-  const VALID_USER = "admin";
-  const VALID_PASS = "1234";
+let scanCount = 0;
+let qrScanner;
 
-  let totalScans = 0;
+function navigate(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+}
 
-  function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(pageId).classList.add('active');
-  }
+function login() {
+  navigate('selectionPage');
+}
 
-  function login() {
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
+function selectOption(el) {
+  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
 
-    if (user === VALID_USER && pass === VALID_PASS) {
-      showPage("scanPage");
-    } else {
-      document.getElementById("loginError").innerText = "Invalid credentials";
+function handleConfirm() {
+  startScan();
+}
+
+function startScan() {
+  navigate('cameraPage');
+  qrScanner = new Html5Qrcode("qr-reader");
+
+  Html5Qrcode.getCameras().then(cameras => {
+    if (!cameras.length) {
+      alert("No camera found");
+      return;
     }
-  }
+    qrScanner.start(
+      cameras[0].id,
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    );
+  }).catch(err => alert(err));
+}
 
-  function scanQR() {
-    totalScans += 1;
-    document.getElementById("scanCount").innerText = totalScans;
-    showPage("resultPage");
-  }
+function onScanSuccess(decodedText) {
+  qrScanner.stop().then(() => {
+    scanCount++;
+    document.getElementById("counterDisplay").innerText = scanCount;
+    navigate('resultPage');
+  });
+}
 
-  function scanAgain() {
-    showPage("scanPage");
-  }
-
-  function finish() {
-    alert("Scanning session completed.\nTotal scans: " + totalScans);
-    totalScans = 0;
-    document.getElementById("scanCount").innerText = 0;
-    showPage("loginPage");
-  }
+function finish() {
+  alert("Session complete. Total scans: " + scanCount);
+  scanCount = 0;
+  document.getElementById("counterDisplay").innerText = 0;
+  navigate('loginPage');
+}
 </script>
-
 </body>
 </html>
