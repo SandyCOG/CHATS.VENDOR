@@ -1,264 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Scanner Simulator</title>
-    <style>
-        :root {
-            --primary-green: #12B77A;
-            --light-green: #86D9B5;
-            --bg-gray: #f9f9f9;
-            --text-dark: #333;
-        }
+<meta charset="UTF-8">
+<title>QR Scan App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #333;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 0;
+  }
 
-        .mobile-container {
-            width: 375px;
-            height: 667px;
-            background: white;
-            border-radius: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
+  .page {
+    display: none;
+    padding: 30px;
+    text-align: center;
+  }
 
-        .page {
-            display: none;
-            padding: 30px 20px;
-            flex-direction: column;
-            height: 100%;
-            box-sizing: border-box;
-            animation: fadeIn 0.3s;
-        }
+  .active {
+    display: block;
+  }
 
-        .active { display: flex; }
+  input, button {
+    width: 90%;
+    padding: 14px;
+    margin: 10px 0;
+    font-size: 16px;
+  }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
 
-        /* Login Styles */
-        h2 { font-size: 24px; margin-bottom: 5px; }
-        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
-        input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-sizing: border-box;
-            background: #F7F8F9;
-        }
+  button.secondary {
+    background: #6c757d;
+  }
 
-        /* Selection List */
-        .option-card {
-            border: 2px solid #eee;
-            border-radius: 12px;
-            padding: 18px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .option-card.selected {
-            border-color: var(--primary-green);
-            background-color: #f0fff9;
-        }
-
-        .check-circle {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 2px solid #ccc;
-        }
-
-        .selected .check-circle {
-            background: var(--primary-green);
-            border-color: var(--primary-green);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .selected .check-circle::after {
-            content: '✓'; color: white; font-size: 14px;
-        }
-
-        /* Camera Simulation */
-        #cameraPage {
-            background: #000;
-            padding: 0;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .viewfinder {
-            width: 250px;
-            height: 250px;
-            border: 2px solid rgba(255,255,255,0.5);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .laser {
-            width: 100%;
-            height: 2px;
-            background: var(--primary-green);
-            position: absolute;
-            top: 0;
-            box-shadow: 0 0 15px var(--primary-green);
-            animation: scanning 2s infinite ease-in-out;
-        }
-
-        @keyframes scanning {
-            0% { top: 0; }
-            50% { top: 100%; }
-            100% { top: 0; }
-        }
-
-        .camera-text {
-            color: white;
-            position: absolute;
-            bottom: 50px;
-            text-align: center;
-            width: 100%;
-        }
-
-        /* Buttons */
-        .btn-primary {
-            background-color: var(--primary-green);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: auto;
-        }
-
-        .result-circle {
-            width: 120px;
-            height: 120px;
-            background: var(--primary-green);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 32px;
-            margin: 40px auto;
-            font-weight: bold;
-        }
-    </style>
+  h1 {
+    font-size: 22px;
+  }
+</style>
 </head>
+
 <body>
 
-<div class="mobile-container">
-    
-    <div id="loginPage" class="page active">
-        <h2>Welcome back!</h2>
-        <p class="subtitle">Please sign in to continue</p>
-        <input type="email" id="email" placeholder="Email" value="admin@example.com">
-        <input type="password" id="password" placeholder="Password" value="12345">
-        <button class="btn-primary" onclick="login()">Log In</button>
-    </div>
+<!-- PAGE 1: LOGIN -->
+<div class="page active" id="loginPage">
+  <h1>Login</h1>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p id="loginError" style="color:red;"></p>
+</div>
 
-    <div id="selectionPage" class="page">
-        <h3 style="text-align: center; margin-bottom: 30px;">Choose Method</h3>
-        
-        <div class="option-card" onclick="selectOption(this)">
-            <span>Generate QR Code</span>
-            <div class="check-circle"></div>
-        </div>
-        
-        <div class="option-card selected" onclick="selectOption(this)" id="qrOption">
-            <span>Scan QR Code</span>
-            <div class="check-circle"></div>
-        </div>
-        
-        <div class="option-card" onclick="selectOption(this)">
-            <span>Tap NFC Card</span>
-            <div class="check-circle"></div>
-        </div>
+<!-- PAGE 2: SCAN -->
+<div class="page" id="scanPage">
+  <h1>Scan QR Code</h1>
+  <button onclick="scanQR()">Scan QR Code</button>
+</div>
 
-        <button class="btn-primary" onclick="handleConfirm()">Confirm Selection</button>
-    </div>
-
-    <div id="cameraPage" class="page">
-        <div class="viewfinder">
-            <div class="laser"></div>
-        </div>
-        <div class="camera-text">
-            <p>Align QR Code within frame</p>
-            <small style="opacity: 0.6">Simulating Camera Feed...</small>
-        </div>
-    </div>
-
-    <div id="resultPage" class="page">
-        <h2 style="text-align: center; margin-top: 20px;">Scan Completed</h2>
-        <div class="result-circle" id="counterDisplay">0</div>
-        <p style="text-align: center; color: #666;">QR Codes Scanned in this session</p>
-        
-        <button class="btn-primary" onclick="navigate('selectionPage')">Scan Another</button>
-        <button class="btn-primary" style="background: #f1f1f1; color: #333; margin-top: 10px;" onclick="location.reload()">Finish & Logout</button>
-    </div>
-
+<!-- PAGE 3: RESULT -->
+<div class="page" id="resultPage">
+  <h1>Scan completed ✅</h1>
+  <h2><span id="scanCount">0</span> QR codes scanned</h2>
+  <button onclick="scanAgain()">Scan Again</button>
+  <button class="secondary" onclick="finish()">Finish</button>
 </div>
 
 <script>
-    let scanCount = 0;
+  // Preprogrammed credentials
+  const VALID_USER = "admin";
+  const VALID_PASS = "1234";
 
-    function navigate(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-    }
+  let totalScans = 0;
 
-    function login() {
-        navigate('selectionPage');
-    }
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+  }
 
-    function selectOption(element) {
-        // Remove selected class from all
-        document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-        // Add to clicked
-        element.classList.add('selected');
-    }
+  function login() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
 
-    function handleConfirm() {
-        const isQRSelected = document.getElementById('qrOption').classList.contains('selected');
-        
-        if (isQRSelected) {
-            startScanProcess();
-        } else {
-            alert("This simulator currently only supports 'Scan QR Code'.");
-        }
+    if (user === VALID_USER && pass === VALID_PASS) {
+      showPage("scanPage");
+    } else {
+      document.getElementById("loginError").innerText = "Invalid credentials";
     }
+  }
 
-    function startScanProcess() {
-        navigate('cameraPage');
-        
-        // Simulating the 2-second wait of a camera focusing and "finding" the code
-        setTimeout(() => {
-            scanCount++;
-            document.getElementById('counterDisplay').innerText = scanCount;
-            navigate('resultPage');
-        }, 2500);
-    }
+  function scanQR() {
+    totalScans += 1;
+    document.getElementById("scanCount").innerText = totalScans;
+    showPage("resultPage");
+  }
+
+  function scanAgain() {
+    showPage("scanPage");
+  }
+
+  function finish() {
+    alert("Scanning session completed.\nTotal scans: " + totalScans);
+    totalScans = 0;
+    document.getElementById("scanCount").innerText = 0;
+    showPage("loginPage");
+  }
 </script>
 
 </body>
