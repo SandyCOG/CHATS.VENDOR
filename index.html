@@ -11,10 +11,9 @@
 <style>
 :root {
   --primary-green: #12B77A;
-  --bg-gray: #f9f9f9;
 }
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: Arial, sans-serif;
   background-color: #333;
   margin: 0;
   display: flex;
@@ -38,7 +37,9 @@ body {
   flex-direction: column;
   height: 100%;
 }
-.page.active { display: flex; }
+.page.active {
+  display: flex;
+}
 input, button {
   width: 100%;
   padding: 15px;
@@ -55,29 +56,11 @@ input {
   color: white;
   border: none;
   font-weight: bold;
-}
-.option-card {
-  border: 2px solid #eee;
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
   cursor: pointer;
 }
-.option-card.selected {
-  border-color: var(--primary-green);
-  background: #f0fff9;
-}
-.check-circle {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid #ccc;
-}
-.selected .check-circle {
-  background: var(--primary-green);
-  border-color: var(--primary-green);
+#errorMsg {
+  color: red;
+  text-align: center;
 }
 #qr-reader {
   width: 280px;
@@ -103,26 +86,18 @@ input {
 
 <!-- LOGIN PAGE -->
 <div id="loginPage" class="page active">
-  <h2>Welcome back</h2>
-  <input type="email" id="email" value="admin@example.com">
-  <input type="password" id="password" value="12345">
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <p id="errorMsg"></p>
   <button class="btn-primary" onclick="login()">Log In</button>
-</div>
-
-<!-- SELECTION PAGE -->
-<div id="selectionPage" class="page">
-  <h3>Choose Method</h3>
-  <div class="option-card selected" id="qrOption" onclick="selectOption(this)">
-    <span>Scan QR Code</span>
-    <div class="check-circle"></div>
-  </div>
-  <button class="btn-primary" onclick="handleConfirm()">Confirm Selection</button>
 </div>
 
 <!-- CAMERA PAGE -->
 <div id="cameraPage" class="page">
+  <h3 style="text-align:center;">Scan QR Code</h3>
   <div id="qr-reader"></div>
-  <p style="text-align:center;">Align QR Code within frame</p>
+  <p style="text-align:center;">Align QR code within frame</p>
 </div>
 
 <!-- RESULT PAGE -->
@@ -130,7 +105,7 @@ input {
   <h2 style="text-align:center;">Scan Completed</h2>
   <div class="result-circle" id="counterDisplay">0</div>
   <p style="text-align:center;">QR Codes Scanned</p>
-  <button class="btn-primary" onclick="navigate('selectionPage')">Scan Again</button>
+  <button class="btn-primary" onclick="scanAgain()">Scan Again</button>
   <button class="btn-primary" style="background:#eee;color:#333;" onclick="finish()">Finish & Logout</button>
 </div>
 
@@ -138,7 +113,11 @@ input {
 
 <script>
 let scanCount = 0;
-let qrScanner;
+let qrScanner = null;
+
+// Simple hard-coded credentials (can be replaced later)
+const VALID_EMAIL = "admin@example.com";
+const VALID_PASSWORD = "12345";
 
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -146,33 +125,35 @@ function navigate(pageId) {
 }
 
 function login() {
-  navigate('selectionPage');
-}
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const errorMsg = document.getElementById("errorMsg");
 
-function selectOption(el) {
-  document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-}
+  if (!email || !password) {
+    errorMsg.innerText = "Please enter email and password";
+    return;
+  }
 
-function handleConfirm() {
-  startScan();
+  if (email === VALID_EMAIL && password === VALID_PASSWORD) {
+    errorMsg.innerText = "";
+    startScan();
+  } else {
+    errorMsg.innerText = "Invalid credentials";
+  }
 }
 
 function startScan() {
   navigate('cameraPage');
+
   qrScanner = new Html5Qrcode("qr-reader");
 
-  Html5Qrcode.getCameras().then(cameras => {
-    if (!cameras.length) {
-      alert("No camera found");
-      return;
-    }
-    qrScanner.start(
-      cameras[0].id,
-      { fps: 10, qrbox: 250 },
-      onScanSuccess
-    );
-  }).catch(err => alert(err));
+  qrScanner.start(
+    { facingMode: "environment" }, // ✅ BACK CAMERA
+    { fps: 10, qrbox: 250 },
+    onScanSuccess
+  ).catch(err => {
+    alert("Camera error: " + err);
+  });
 }
 
 function onScanSuccess(decodedText) {
@@ -183,12 +164,19 @@ function onScanSuccess(decodedText) {
   });
 }
 
+function scanAgain() {
+  startScan();
+}
+
 function finish() {
-  alert("Session complete. Total scans: " + scanCount);
+  alert("Session completed.\nTotal scans: " + scanCount);
   scanCount = 0;
   document.getElementById("counterDisplay").innerText = 0;
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
   navigate('loginPage');
 }
 </script>
+
 </body>
 </html>
